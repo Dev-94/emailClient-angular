@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
-import { SignupComponent } from './signup/signup.component'
 import { BehaviorSubject } from 'rxjs'
 import { tap } from 'rxjs/operators'
 
@@ -9,23 +8,23 @@ interface UsernameAvailableResponse {
 }
 
 interface SignupCredentials {
-  username: string,
-  password: string,
-  passwordConfirmation: string,
+  username: string
+  password: string
+  passwordConfirmation: string
 }
 
 interface SignupResponse {
-  username: string,
+  username: string
 }
 
-interface SignedInResponse {
-  authenticated: boolean,
-  username: string,
+interface SignedinResponse {
+  authenticated: boolean
+  username: string
 }
 
 interface SigninCredentials {
-  username: string,
-  password: string,
+  username: string
+  password: string
 }
 
 @Injectable({
@@ -33,46 +32,52 @@ interface SigninCredentials {
 })
 export class AuthService {
   rootUrl = 'https://api.angular-email.com'
-  signedIn$ = new BehaviorSubject(null)
+  signedin$ = new BehaviorSubject(false)
 
   constructor(private http: HttpClient) { }
 
   usernameAvailable(username: string) {
-    return this.http.post<UsernameAvailableResponse>(this.rootUrl + '/auth/username',
-      { username })
-
-
+    return this.http.post<UsernameAvailableResponse>(
+      `${this.rootUrl}/auth/username`,
+      {
+        username
+      }
+    )
   }
+
   signup(credentials: SignupCredentials) {
-    return this.http.post<SignupResponse>(this.rootUrl + '/auth/signup', credentials)
-      .pipe(tap(() => { this.signedIn$.next(true) }))
-  }
-
-
-  checkAuth() {
-    return this.http.get<SignedInResponse>(this.rootUrl + '/auth/signedin')
+    return this.http
+      .post<SignupResponse>(`${this.rootUrl}/auth/signup`, credentials)
       .pipe(
-        tap(({ authenticated }) => {
-          this.signedIn$.next(authenticated)
+        tap(() => {
+          this.signedin$.next(true)
         })
       )
   }
 
+  checkAuth() {
+    return this.http
+      .get<SignedinResponse>(`${this.rootUrl}/auth/signedin`)
+      .pipe(
+        tap(({ authenticated }) => {
+          this.signedin$.next(authenticated)
+        })
+      );
+  }
+
   signOut() {
-    return this.http.post<any>(this.rootUrl + '/auth/signout', {}).pipe(
+    return this.http.post(`${this.rootUrl}/auth/signout`, {}).pipe(
       tap(() => {
-        this.signedIn$.next(false)
+        this.signedin$.next(false)
       })
     )
   }
 
-
   signIn(credentials: SigninCredentials) {
-    return this.http.post<any>(this.rootUrl + '/auth/signin', credentials)
-      .pipe(
-        tap(({ }) => {
-          this.signedIn$.next(true)
-        })
-      )
+    return this.http.post(`${this.rootUrl}/auth/signin`, credentials).pipe(
+      tap(() => {
+        this.signedin$.next(true)
+      })
+    );
   }
 }
